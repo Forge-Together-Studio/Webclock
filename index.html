@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Care Home Rating Tool | CMS Five-Star Quality Rating</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-area">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1>Care Home Rating Tool</h1>
+                        <p class="subtitle">CMS Five-Star Quality Rating System</p>
+                    </div>
+                </div>
+                <a href="https://data.cms.gov/provider-data/dataset/4pq5-n9py" target="_blank" rel="noopener" class="data-source-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                    CMS Data Source
+                </a>
+            </div>
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-container">
+                <h2>Find Your Care Home</h2>
+                <p class="search-description">Search by facility name to view CMS star ratings and get personalized improvement recommendations.</p>
+                <div class="search-box">
+                    <div class="search-input-wrapper">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Enter care home name (e.g., Sunrise Senior Living)"
+                            autocomplete="off"
+                        >
+                        <button id="clearBtn" class="clear-btn hidden" title="Clear search">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <button id="searchBtn" class="search-btn">
+                        <span>Search</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                            <polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="search-hints">
+                    <span class="hint-label">Try:</span>
+                    <button class="hint-btn" data-query="Sunrise">Sunrise</button>
+                    <button class="hint-btn" data-query="Brookdale">Brookdale</button>
+                    <button class="hint-btn" data-query="Golden Living">Golden Living</button>
+                    <button class="hint-btn" data-query="Kindred">Kindred</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state hidden">
+            <div class="loader">
+                <div class="loader-spinner"></div>
+                <p id="loadingMessage">Searching CMS database...</p>
+                <p id="loadingDetail" class="loading-detail"></p>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="error-state hidden">
+            <div class="error-content">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <h3 id="errorTitle">Something went wrong</h3>
+                <p id="errorMessage">Please try again later.</p>
+                <button id="retryBtn" class="retry-btn">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <section id="resultsSection" class="results-section hidden">
+            <div class="results-header">
+                <h3><span id="resultCount">0</span> facilities found</h3>
+                <div class="results-sort">
+                    <label for="sortSelect">Sort by:</label>
+                    <select id="sortSelect">
+                        <option value="relevance">Relevance</option>
+                        <option value="rating-desc">Rating (High to Low)</option>
+                        <option value="rating-asc">Rating (Low to High)</option>
+                        <option value="name">Name (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="resultsList" class="results-list"></div>
+            <div id="pagination" class="pagination hidden">
+                <button id="prevPage" class="page-btn" disabled>Previous</button>
+                <span id="pageInfo" class="page-info"></span>
+                <button id="nextPage" class="page-btn">Next</button>
+            </div>
+        </section>
+
+        <!-- Facility Detail Panel -->
+        <section id="detailPanel" class="detail-panel hidden">
+            <button id="backToResults" class="back-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <line x1="19" y1="12" x2="5" y2="12"/>
+                    <polyline points="12 19 5 12 12 5"/>
+                </svg>
+                Back to results
+            </button>
+
+            <!-- Facility Header -->
+            <div id="facilityHeader" class="facility-header">
+                <div class="facility-name-row">
+                    <h2 id="facilityName"></h2>
+                    <div id="overallBadge" class="overall-badge"></div>
+                </div>
+                <div class="facility-meta">
+                    <span id="facilityAddress" class="meta-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <span></span>
+                    </span>
+                    <span id="facilityPhone" class="meta-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+                        </svg>
+                        <span></span>
+                    </span>
+                    <span id="facilityBeds" class="meta-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M2 4v16"/>
+                            <path d="M2 8h18a2 2 0 012 2v10"/>
+                            <path d="M2 17h20"/>
+                            <path d="M6 8v9"/>
+                        </svg>
+                        <span></span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Rating Cards -->
+            <div class="ratings-grid">
+                <div class="rating-card overall-card">
+                    <div class="rating-card-header">
+                        <h3>Overall Rating</h3>
+                    </div>
+                    <div class="rating-card-body">
+                        <div id="overallStars" class="star-display"></div>
+                        <p id="overallLabel" class="rating-label"></p>
+                    </div>
+                </div>
+                <div class="rating-card">
+                    <div class="rating-card-header">
+                        <h3>Health Inspection</h3>
+                        <span class="rating-card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                <path d="M9 12l2 2 4-4"/>
+                                <path d="M21 12c0 1.657-4.03 3-9 3s-9-1.343-9-3"/>
+                                <path d="M3 12V6a9 9 0 0118 0v6"/>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="rating-card-body">
+                        <div id="healthStars" class="star-display"></div>
+                        <p id="healthLabel" class="rating-label"></p>
+                    </div>
+                </div>
+                <div class="rating-card">
+                    <div class="rating-card-header">
+                        <h3>Staffing</h3>
+                        <span class="rating-card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 010 7.75"/>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="rating-card-body">
+                        <div id="staffingStars" class="star-display"></div>
+                        <p id="staffingLabel" class="rating-label"></p>
+                    </div>
+                </div>
+                <div class="rating-card">
+                    <div class="rating-card-header">
+                        <h3>Quality Measures</h3>
+                        <span class="rating-card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="rating-card-body">
+                        <div id="qmStars" class="star-display"></div>
+                        <p id="qmLabel" class="rating-label"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Data -->
+            <div id="additionalData" class="additional-data"></div>
+
+            <!-- AI Recommendations -->
+            <div class="recommendations-section">
+                <div class="recommendations-header">
+                    <div class="ai-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <path d="M12 2a4 4 0 014 4c0 1.95-1.4 3.58-3.25 3.93L12 22l-.75-12.07A4.001 4.001 0 0112 2z"/>
+                            <path d="M8.5 8.5L2 12l6.5 3.5"/>
+                            <path d="M15.5 8.5L22 12l-6.5 3.5"/>
+                        </svg>
+                        AI-Powered Analysis
+                    </div>
+                    <h3>Recommendations to Reach 5 Stars</h3>
+                    <p class="rec-subtitle">Personalized improvement plan based on current rating data</p>
+                </div>
+                <div id="recommendationsContent" class="recommendations-content"></div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="disclaimer">
+                <p><strong>Disclaimer:</strong> Ratings are sourced from the CMS Provider Data Catalog. Recommendations are generated algorithmically based on CMS rating methodology and general best practices. They are not a substitute for professional consultation with CMS surveyors or healthcare quality experts. Data is updated periodically by CMS.</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Data sourced from <a href="https://data.cms.gov/provider-data/dataset/4pq5-n9py" target="_blank" rel="noopener">CMS Provider Data Catalog</a>. This tool is not affiliated with CMS.</p>
+        </footer>
+    </div>
+
+    <script src="js/recommendations.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
