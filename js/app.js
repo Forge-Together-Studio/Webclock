@@ -12,7 +12,8 @@
 
     // When running via server.js, route through the local proxy to avoid CORS.
     // When hosted on a server that can reach CMS directly, use the direct URL.
-    const CMS_PATH = '/data-api/v1/dataset/d65b8be0-946e-410b-ab06-01829628d5a1/data';
+    // Use the DKAN datastore/query endpoint with the dataset short-ID directly.
+    const CMS_PATH = '/provider-data/api/1/datastore/query/4pq5-n9py/0';
     const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     const API_BASE = isLocal ? `/api${CMS_PATH}` : `https://data.cms.gov${CMS_PATH}`;
     const PAGE_SIZE = 20;
@@ -170,15 +171,15 @@
 
         const allRecords = [];
 
-        // The data-api/v1 endpoint uses size/offset for pagination.
-        // The dataset has ~15,000 records; fetch in batches of 5000.
-        const batchSize = 5000;
+        // DKAN datastore/query endpoint uses limit/offset for pagination.
+        // Default max is 500 rows per request. The dataset has ~15,000 records.
+        const batchSize = 500;
         let offset = 0;
         let hasMore = true;
 
         while (hasMore) {
             setLoadingMessage('Loading CMS nursing home data...', `Downloaded ${allRecords.length.toLocaleString()} facilities so far...`);
-            const url = `${API_BASE}?size=${batchSize}&offset=${offset}`;
+            const url = `${API_BASE}?limit=${batchSize}&offset=${offset}&count=true&results=true`;
             const response = await fetchWithRetry(url);
 
             if (!response.ok) {
