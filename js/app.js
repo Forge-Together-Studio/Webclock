@@ -10,7 +10,11 @@
 
     // ── Configuration ──
 
-    const API_BASE = 'https://data.cms.gov/data-api/v1/dataset/d65b8be0-946e-410b-ab06-01829628d5a1/data';
+    // When running via server.js, route through the local proxy to avoid CORS.
+    // When hosted on a server that can reach CMS directly, use the direct URL.
+    const CMS_PATH = '/data-api/v1/dataset/d65b8be0-946e-410b-ab06-01829628d5a1/data';
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const API_BASE = isLocal ? `/api${CMS_PATH}` : `https://data.cms.gov${CMS_PATH}`;
     const PAGE_SIZE = 20;
 
     // Mapping of possible API field names to our internal names.
