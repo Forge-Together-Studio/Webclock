@@ -195,6 +195,11 @@
             if (results.length === 0) {
                 hasMore = false;
             } else {
+                // Log first record's keys so we can verify field names
+                if (allRecords.length === 0 && results[0]) {
+                    console.log('[CMS] First record keys:', Object.keys(results[0]));
+                    console.log('[CMS] First record sample:', JSON.stringify(results[0]).substring(0, 500));
+                }
                 allRecords.push(...results);
                 offset += batchSize;
                 // Stop if we got less than a full batch (last page)
