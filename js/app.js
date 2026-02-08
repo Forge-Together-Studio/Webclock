@@ -148,10 +148,13 @@
     async function fetchWithRetry(url, retries = 2) {
         for (let i = 0; i <= retries; i++) {
             try {
+                console.log(`[CMS] Fetching (attempt ${i + 1}): ${url}`);
                 const response = await fetch(url);
+                console.log(`[CMS] Response status: ${response.status}`);
                 if (response.ok) return response;
-                if (i === retries) return response; // Return last response even if not ok
+                if (i === retries) return response;
             } catch (err) {
+                console.error(`[CMS] Fetch error (attempt ${i + 1}):`, err.message);
                 if (i === retries) throw err;
             }
         }
@@ -566,7 +569,7 @@
             console.error('Search failed:', err);
             showError(
                 'Unable to search CMS database',
-                'There was a problem connecting to the CMS data API. Please check your internet connection and try again.'
+                `Error: ${err.message} | API URL attempted: ${API_BASE} | Make sure you are running via node server.js and accessing http://localhost:3000`
             );
         }
     }
