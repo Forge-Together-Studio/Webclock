@@ -10,7 +10,7 @@
 
     // ── Configuration ──
 
-    const API_BASE = 'https://data.cms.gov/provider-data/api/1/datastore/query/4pq5-n9py/0';
+    const API_BASE = 'https://data.cms.gov/data-api/v1/dataset/d65b8be0-946e-410b-ab06-01829628d5a1/data';
     const PAGE_SIZE = 20;
 
     // Mapping of possible API field names to our internal names.
@@ -163,20 +163,21 @@
 
         const allRecords = [];
 
-        // Strategy 1: Paginated fetch from DKAN datastore API
-        // The dataset has ~15,000 records; fetch in batches of 5000
+        // The data-api/v1 endpoint uses size/offset for pagination.
+        // The dataset has ~15,000 records; fetch in batches of 5000.
         const batchSize = 5000;
         let offset = 0;
         let hasMore = true;
 
         while (hasMore) {
             setLoadingMessage('Loading CMS nursing home data...', `Downloaded ${allRecords.length.toLocaleString()} facilities so far...`);
-            const url = `${API_BASE}?limit=${batchSize}&offset=${offset}&count=true&results=true`;
+            const url = `${API_BASE}?size=${batchSize}&offset=${offset}`;
             const response = await fetchWithRetry(url);
 
             if (!response.ok) {
-                // If first batch fails, try alternative endpoint
-                if (offset === 0) break;
+                if (allRecords.length === 0) {
+                    throw new Error(`CMS API returned status ${response.status}`);
+                }
                 hasMore = false;
                 continue;
             }
@@ -193,34 +194,6 @@
                 if (results.length < batchSize) hasMore = false;
                 // Safety limit
                 if (offset > 25000) hasMore = false;
-            }
-        }
-
-        // Strategy 2: If DKAN endpoint didn't work, try the data-api endpoint
-        if (allRecords.length === 0) {
-            // Try to discover the UUID via the metastore
-            const metaUrl = 'https://data.cms.gov/provider-data/api/1/metastore/schemas/dataset/items/4pq5-n9py';
-            try {
-                const metaResp = await fetchWithRetry(metaUrl, 1);
-                if (metaResp.ok) {
-                    const meta = await metaResp.json();
-                    // Look for API distribution
-                    const distributions = meta.distribution || [];
-                    for (const dist of distributions) {
-                        if (dist.format === 'API' || (dist.mediaType && dist.mediaType.includes('json'))) {
-                            const apiUrl = dist.downloadURL || dist.accessURL;
-                            if (apiUrl) {
-                                const dataResp = await fetchWithRetry(`${apiUrl}?size=15000&offset=0`, 1);
-                                if (dataResp.ok) {
-                                    const d = await dataResp.json();
-                                    allRecords.push(...extractResults(d));
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('Metastore lookup failed:', e);
             }
         }
 
